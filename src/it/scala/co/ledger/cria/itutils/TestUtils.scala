@@ -10,8 +10,7 @@ import co.ledger.cria.itutils.models.{
 }
 import co.ledger.cria.itutils.queries.OperationTestQueries
 import co.ledger.cria.models.account.AccountId
-import co.ledger.cria.models.account.interpreter.CurrentBalance
-import co.ledger.cria.models.interpreter.{Operation, TransactionView}
+import co.ledger.cria.models.interpreter.{CurrentBalance, Operation, TransactionView}
 import co.ledger.cria.models.{Sort, TxHash}
 import co.ledger.cria.services.interpreter.OperationQueries.{OpWithoutDetails, OperationDetails}
 import co.ledger.cria.services.interpreter.{BalanceQueries, OperationQueries}

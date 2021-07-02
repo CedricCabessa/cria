@@ -2,12 +2,10 @@ package co.ledger.cria.services.interpreter
 
 import co.ledger.cria.logging.DoobieLogHandler
 import co.ledger.cria.models.account.AccountId
-import co.ledger.cria.models.account.interpreter.BlockchainBalance
-
 import co.ledger.cria.models.implicits._
+import co.ledger.cria.models.interpreter.BlockchainBalance
 import doobie._
 import doobie.implicits._
-import co.ledger.cria.services.interpreter.implicits._
 
 object BalanceQueries extends DoobieLogHandler {
 

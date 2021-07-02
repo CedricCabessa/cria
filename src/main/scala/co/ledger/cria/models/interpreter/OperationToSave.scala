@@ -41,27 +41,27 @@ case class TransactionAmounts(
     changeAmount: BigInt
 ) extends ContextLogging {
 
-  def computeOperations(implicit lc: CriaLogContext): fs2.Stream[IO, OperationToSave] = {
+  def computeOperations(implicit lc: CriaLogContext): List[OperationToSave] = {
     TransactionType.fromAmounts(inputAmount, outputAmount, changeAmount) match {
       case SendType =>
-        Stream.emit(makeOperationToSave(inputAmount - changeAmount, OperationType.Send))
+        List(makeOperationToSave(inputAmount - changeAmount, OperationType.Send))
       case ReceiveType =>
-        Stream.emit(makeOperationToSave(outputAmount + changeAmount, OperationType.Receive))
+        List(makeOperationToSave(outputAmount + changeAmount, OperationType.Receive))
       case ChangeOnlyType =>
-        Stream.emit(makeOperationToSave(changeAmount, OperationType.Receive))
+        List(makeOperationToSave(changeAmount, OperationType.Receive))
       case BothType =>
-        Stream(
+        List(
           makeOperationToSave(inputAmount - changeAmount, OperationType.Send),
           makeOperationToSave(outputAmount, OperationType.Receive)
         )
       case NoneType =>
-        Stream
-          .eval(
-            log.error(
-              s"Error on tx : $hash, no transaction type found for amounts : input: $inputAmount, output: $outputAmount, change: $changeAmount"
-            )
+        log
+          .error(
+            s"Error on tx : $hash, no transaction type found for amounts : input: $inputAmount, output: $outputAmount, change: $changeAmount"
           )
-          .flatMap(_ => Stream.empty)
+          .unsafeRunSync()
+        Nil
+
     }
   }
 

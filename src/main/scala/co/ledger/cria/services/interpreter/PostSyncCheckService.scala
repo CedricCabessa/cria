@@ -3,7 +3,7 @@ package co.ledger.cria.services.interpreter
 import cats.effect.IO
 import co.ledger.cria.logging.{ContextLogging, CriaLogContext}
 import co.ledger.cria.models.account.AccountId
-import co.ledger.cria.models.account.interpreter.CurrentBalance
+import co.ledger.cria.models.interpreter.CurrentBalance
 import doobie._
 import doobie.implicits._
 

@@ -1,9 +1,13 @@
 package co.ledger.cria.services.interpreter
 
+import java.util.UUID
+
+import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO}
 import co.ledger.cria.logging.{ContextLogging, CriaLogContext}
+import co.ledger.cria.models.{Sort, TxHash}
+import co.ledger.cria.models.interpreter.{AccountTxView, BlockView, TransactionView}
 import co.ledger.cria.models.account.AccountId
-import co.ledger.cria.models.interpreter.{AccountTxView, BlockView}
 import doobie.Transactor
 import doobie.implicits._
 import fs2._
@@ -46,5 +50,23 @@ class TransactionService(db: Transactor[IO], maxConcurrent: Int) extends Context
     TransactionQueries
       .deleteUnconfirmedTransaction(accountId, hash)
       .transact(db)
+
+  def fetchTransactions(
+      accountId: AccountId,
+      sort: Sort,
+      hashes: NonEmptyList[TxHash]
+  ): Stream[IO, TransactionView] = {
+    val txStream = TransactionQueries.fetchTransaction(accountId, sort, hashes).transact(db)
+    val txDetailsStream =
+      TransactionQueries.fetchTransactionDetails(accountId, sort, hashes).transact(db)
+
+    txStream
+      .zip(txDetailsStream)
+      .collect {
+        case (tx, details) if tx.hash == details.txHash.hex =>
+          tx.copy(inputs = details.inputs, outputs = details.outputs)
+      }
+
+  }
 
 }

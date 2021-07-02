@@ -1,10 +1,11 @@
 package co.ledger.cria.services.interpreter
 
 import java.time.Instant
+
 import cats.data.NonEmptyList
 import cats.implicits._
 import co.ledger.cria.logging.DoobieLogHandler
-import co.ledger.cria.models.TxHash
+import co.ledger.cria.models.{Sort, TxHash}
 import co.ledger.cria.models.account.AccountId
 import co.ledger.cria.models.interpreter._
 import co.ledger.cria.models.implicits._
@@ -48,7 +49,8 @@ object OperationQueries extends DoobieLogHandler {
   )
 
   def fetchUncomputedTransactionAmounts(
-      accountId: AccountId
+      accountId: AccountId,
+      sort: Sort
   ): Stream[ConnectionIO, TransactionAmounts] =
     sql"""SELECT tx.account_id,
                  tx.hash,
@@ -64,8 +66,8 @@ object OperationQueries extends DoobieLogHandler {
               ON op.hash = tx.hash
               AND op.account_id = tx.account_id
           WHERE op.hash IS null
-          AND tx.account_id = $accountId
-       """
+          AND tx.account_id = $accountId""" ++ Fragment
+      .const(s"ORDER BY t.block_time $sort, t.hash $sort")
       .query[TransactionAmounts]
       .stream
 

@@ -123,9 +123,7 @@ class Synchronizer(
       _ <- log.info(s"Last block synchronized: ${lastMinedBlock.block}")
 
       _ <- IOUtils.withTimer("Computation finished")(
-        interpreterClient.compute(
-          account,
-          syncParams.syncId,
+        interpreterClient.compute(account, account.coin, syncParams.walletUid)(
           (addressesUsed ++ addressesUsedByMempool).distinct
         )
       )

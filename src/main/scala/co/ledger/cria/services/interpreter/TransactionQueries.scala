@@ -10,7 +10,6 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import fs2._
-import co.ledger.cria.services.interpreter.implicits._
 
 object TransactionQueries extends DoobieLogHandler {
 
@@ -131,6 +130,37 @@ object TransactionQueries extends DoobieLogHandler {
           AND block_height >= $blockHeight
        """.update.run
 
+  def fetchTransaction(
+      accountId: AccountId,
+      sort: Sort,
+      txHashes: NonEmptyList[TxHash]
+  ): Stream[doobie.ConnectionIO, TransactionView] = {
+    log.logger.debug(
+      s"Fetching transactions for accountId $accountId and hashes in $txHashes"
+    )
+
+    val belongsToTxs = withTxHashIn(txHashes)
+
+    (sql"""
+          SELECT 
+            account_id,
+            id,
+            hash,
+            block_hash,
+            block_height,
+            block_time,
+            received_at,
+            lock_time,
+            fees,
+            confirmations      
+          FROM transaction t
+         WHERE t.account_id = $accountId
+           AND $belongsToTxs
+       """ ++ transactionOrder(sort))
+      .query[TransactionView]
+      .stream
+  }
+
   def fetchTransactionDetails(
       accountId: AccountId,
       sort: Sort,
@@ -162,7 +192,7 @@ object TransactionQueries extends DoobieLogHandler {
   private def transactionOrder(sort: Sort) =
     Fragment.const(s"ORDER BY t.block_time $sort, t.hash $sort")
 
-  private def allTxHashes(hashes: NonEmptyList[TxHash]) =
+  private def withTxHashIn(hashes: NonEmptyList[TxHash]) =
     Fragments.in(fr"t.hash", hashes.map(_.hex))
 
   private def fetchInputs(
@@ -171,7 +201,7 @@ object TransactionQueries extends DoobieLogHandler {
       txHashes: NonEmptyList[TxHash]
   ) = {
 
-    val belongsToTxs = allTxHashes(txHashes)
+    val belongsToTxs = withTxHashIn(txHashes)
 
     (sql"""
           SELECT t.hash, i.output_hash, i.output_index, i.input_index, i.value, i.address, i.script_signature, i.txinwitness, i.sequence, i.derivation
@@ -189,7 +219,7 @@ object TransactionQueries extends DoobieLogHandler {
       txHashes: NonEmptyList[TxHash]
   ) = {
 
-    val belongsToTxs = allTxHashes(txHashes)
+    val belongsToTxs = withTxHashIn(txHashes)
 
     (
       sql"""

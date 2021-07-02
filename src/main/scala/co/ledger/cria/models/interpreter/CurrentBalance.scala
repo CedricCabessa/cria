@@ -1,4 +1,4 @@
-package co.ledger.cria.models.account.interpreter
+package co.ledger.cria.models.interpreter
 
 case class BlockchainBalance(
     balance: BigInt,
